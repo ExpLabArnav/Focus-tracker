@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Focus Tracker</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#6b6a64;--bd:#e3e1da;--ac:#2b6cb0;--ok:#2f855a;--bad:#c53030;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--card:#1f1f1d;--tx:#eeede8;--mut:#9a988f;--bd:#33322e;--ac:#63a4e8;--ok:#5cc48a;--bad:#f07070;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151514;--card:#1f1f1d;--tx:#eeede8;--mut:#9a988f;--bd:#33322e;--ac:#63a4e8;--ok:#5cc48a;--bad:#f07070;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 2px}h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:24px 0 8px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px}
+.now{text-align:center}.now .nm{font-size:18px;font-weight:600}.now .tm{font-size:56px;font-variant-numeric:tabular-nums;font-weight:300;margin:6px 0}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 14px;cursor:pointer}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button.s{background:var(--bad);color:#fff;border-color:var(--bad)}
+button.sm{padding:4px 10px;font-size:13px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--bd)}.row:first-child{border-top:0}
+.row .i{flex:1;min-width:0}.row .n{font-weight:500}.row .m{font-size:13px;color:var(--mut)}
+.bar{height:6px;background:var(--bd);border-radius:4px;margin-top:6px;overflow:hidden}.bar>i{display:block;height:100%;background:var(--ok)}
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid var(--bd);color:var(--mut);margin-right:6px}
+.stats{display:flex;gap:8px}.stats .card{flex:1;text-align:center;padding:10px}.stats b{font-size:20px;display:block}
+.wk{display:flex;align-items:flex-end;gap:6px;height:80px}.wk div{flex:1;text-align:center;font-size:11px;color:var(--mut)}.wk i{display:block;background:var(--ac);border-radius:4px 4px 0 0;margin-bottom:2px;min-height:2px}
+input,select{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);min-width:0}
+.add{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.add input[type=text]{flex:1 1 150px}.add input[type=number]{width:80px}
+.road{font-size:14px;color:var(--mut)}.road li{margin:4px 0}.road b{color:var(--tx)}
+.empty{color:var(--mut);font-size:14px;padding:6px 0}
+</style><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><meta name="theme-color" content="#2b6cb0"></head><body><main>
+<h1>Focus Tracker</h1>
+<p class="sub">Three tasks a day. One timer at a time. Nothing else is shown.</p>
+<div class="card now" id="now"></div>
+<h2>Today’s plan (max 3)</h2>
+<div class="card" id="today"></div>
+<div style="margin-top:8px"><button class="sm" id="sug">Suggest today’s 3</button></div>
+<h2>Today</h2>
+<div class="stats"><div class="card"><b id="sT">0m</b>focused</div><div class="card"><b id="sN">0</b>sessions</div><div class="card"><b id="sS">0</b>day streak</div></div>
+<h2>Last 7 days</h2><div class="card"><div class="wk" id="wk"></div></div>
+<h2>All tasks (pick from here, then forget it)</h2>
+<div class="card"><div id="lib"></div>
+<div class="add"><input type="text" id="an" placeholder="New task name"><select id="ac"><option>IITM</option><option>Coding</option><option>Systems</option><option>Hackathon</option></select><input type="number" id="ap" value="45" min="5" step="5" aria-label="Planned minutes"><button class="p" id="ab">Add</button></div></div>
+<h2>Suggested order</h2>
+<div class="card road"><ol style="margin:0;padding-left:18px">
+<li><b>Git and GitHub</b> (finish it; you need it for hackathons)</li>
+<li><b>Python</b> via IITM, then <b>C</b> basics, then <b>DSA</b> with C++</li>
+<li><b>Systems track</b> in parallel, 30 min a day: IP, DNS, ports, Linux commands, config files, then servers and Docker</li>
+<li><b>One small web project</b> pushed to GitHub, then enter a hackathon</li></ol></div>
+</main>
+<script>
+const K='focus-tracker-v1';
+const seed=[['English 2','IITM',45],['Math 2','IITM',60],['Stats 2','IITM',60],['Python Programming','IITM',60],['Git and GitHub','Coding',45],['C Programming','Coding',60],['DSA','Coding',60],['C++','Coding',45],['Networking basics: IP, DNS, ports','Systems',30],['Linux commands and config files','Systems',30],['Hackathon project','Hackathon',60]];
+let S;
+try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!S||!S.tasks)S={tasks:seed.map((t,i)=>({id:'t'+i,name:t[0],cat:t[1],plan:t[2]})),today:{d:'',ids:[]},sessions:[],active:null};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const tk=()=>dk(Date.now());
+if(S.today.d!==tk())S.today={d:tk(),ids:[]};
+const fm=s=>{s=Math.floor(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>String(n).padStart(2,'0');return (h?h+':':'')+p(m)+':'+p(x)};
+const mn=s=>{const m=Math.round(s/60);return m>=60?Math.floor(m/60)+'h '+m%60+'m':m+'m'};
+const get=id=>S.tasks.find(t=>t.id===id);
+function secs(id,day){let t=0;S.sessions.forEach(s=>{if(s.task===id&&(!day||dk(s.start)===day))t+=(s.end-s.start)/1000});
+ if(S.active&&S.active.task===id&&(!day||dk(S.active.start)===day))t+=(Date.now()-S.active.start)/1000;return t}
+function start(id){if(S.active)stop();S.active={task:id,start:Date.now()};save();render()}
+function stop(){if(!S.active)return;const a=S.active;S.active=null;if(Date.now()-a.start>=10000)S.sessions.push({task:a.task,start:a.start,end:Date.now()});save();render()}
+function togglePlan(id){const i=S.today.ids.indexOf(id);if(i>=0)S.today.ids.splice(i,1);else if(S.today.ids.length<3)S.today.ids.push(id);else alert('Three is the limit. Remove one first. That limit is the point.');save();render()}
+$('sug').onclick=()=>{const wk=Date.now()-7*864e5,cats=['IITM','Coding','Systems'],ids=[];
+ cats.forEach(c=>{const l=S.tasks.filter(t=>t.cat===c).map(t=>({t,s:S.sessions.filter(x=>x.task===t.id&&x.start>wk).reduce((a,x)=>a+x.end-x.start,0)})).sort((a,b)=>a.s-b.s);if(l[0])ids.push(l[0].t.id)});
+ S.today.ids=ids;save();render()};
+$('ab').onclick=()=>{const n=$('an').value.trim();if(!n)return;S.tasks.push({id:'t'+Date.now(),name:n,cat:$('ac').value,plan:+$('ap').value||30});$('an').value='';save();render()};
+function del(id){if(!confirm('Delete this task?'))return;S.tasks=S.tasks.filter(t=>t.id!==id);S.today.ids=S.today.ids.filter(x=>x!==id);if(S.active&&S.active.task===id)S.active=null;save();render()}
+function row(t,inToday){const sd=secs(t.id,tk()),pc=Math.min(100,sd/(t.plan*60)*100),run=S.active&&S.active.task===t.id;
+ return `<div class="row"><div class="i"><div class="n">${t.name}</div><div class="m"><span class="tag">${t.cat}</span>${mn(sd)} of ${t.plan}m today</div>${inToday?`<div class="bar"><i style="width:${pc}%"></i></div>`:''}</div>
+ ${inToday?`<button class="sm ${run?'s':'p'}" onclick="${run?'stop()':`start('${t.id}')`}">${run?'Stop':'Start'}</button><button class="sm" onclick="togglePlan('${t.id}')">Remove</button>`
+ :`<button class="sm" onclick="togglePlan('${t.id}')">${S.today.ids.includes(t.id)?'Planned':'Add to today'}</button><button class="sm" onclick="del('${t.id}')" aria-label="Delete">×</button>`}</div>`}
+function render(){
+ const a=S.active,t=a&&get(a.task);
+ $('now').innerHTML=t?`<div class="m" style="color:var(--mut);font-size:13px">Now working on</div><div class="nm">${t.name}</div><div class="tm" id="clk">${fm((Date.now()-a.start)/1000)}</div><button class="s" onclick="stop()">Stop</button>`
+ :`<div class="nm">Nothing running</div><div class="tm" style="color:var(--mut)">00:00</div><div class="sub" style="margin:0">Pick a task from today’s plan and press Start.</div>`;
+ const td=S.today.ids.map(get).filter(Boolean);
+ $('today').innerHTML=td.length?td.map(x=>row(x,true)).join(''):'<div class="empty">No plan yet. Tap “Suggest today’s 3” or add tasks from the list below.</div>';
+ $('lib').innerHTML=S.tasks.map(x=>row(x,false)).join('');
+ const tt=S.tasks.reduce((s,x)=>s+secs(x.id,tk()),0),n=S.sessions.filter(s=>dk(s.start)===tk()).length;
+ $('sT').textContent=mn(tt);$('sN').textContent=n;
+ let st=0,d=Date.now();const has=day=>S.sessions.some(s=>dk(s.start)===day)||(a&&dk(a.start)===day);
+ if(!has(dk(d)))d-=864e5;while(has(dk(d))){st++;d-=864e5}$('sS').textContent=st;
+ const days=[];for(let i=6;i>=0;i--){const x=new Date(Date.now()-i*864e5);days.push([dk(x),['Su','Mo','Tu','We','Th','Fr','Sa'][x.getDay()]])}
+ const vals=days.map(([k])=>S.tasks.reduce((s,x)=>s+secs(x.id,k),0)),mx=Math.max(...vals,3600);
+ $('wk').innerHTML=days.map((x,i)=>`<div><i style="height:${vals[i]/mx*60}px"></i>${x[1]}<br>${vals[i]?mn(vals[i]):'-'}</div>`).join('');
+}
+setInterval(()=>{if(S.active){const c=$('clk');if(c)c.textContent=fm((Date.now()-S.active.start)/1000)}},1000);
+render();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
