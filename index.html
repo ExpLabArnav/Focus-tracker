@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Focus Tracker</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><meta name="theme-color" content="#2b6cb0">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#6b6a64;--bd:#e3e1da;--ac:#2b6cb0;--ok:#2f855a;--bad:#c53030;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--card:#1f1f1d;--tx:#eeede8;--mut:#9a988f;--bd:#33322e;--ac:#63a4e8;--ok:#5cc48a;--bad:#f07070;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151514;--card:#1f1f1d;--tx:#eeede8;--mut:#9a988f;--bd:#33322e;--ac:#63a4e8;--ok:#5cc48a;--bad:#f07070;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0}h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:22px 0 8px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px}
+.now{text-align:center}.nm{font-size:18px;font-weight:600}.tm{font-size:56px;font-variant-numeric:tabular-nums;font-weight:300;margin:4px 0}
+.lb{color:var(--mut);font-size:13px}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 14px;cursor:pointer}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button.s{background:var(--bad);color:#fff;border-color:var(--bad)}button.on{border-color:var(--ac);color:var(--ac);font-weight:600}
+button.sm{padding:4px 10px;font-size:13px}
+.row{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--bd)}.row:first-child{border-top:0}
+.i{flex:1;min-width:0}.n{font-weight:500;overflow-wrap:anywhere}.m{font-size:13px;color:var(--mut)}
+.bar{height:6px;background:var(--bd);border-radius:4px;margin-top:6px;overflow:hidden}.bar>i{display:block;height:100%;background:var(--ok)}
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid var(--bd);color:var(--mut);margin-right:6px}
+.stats{display:flex;gap:8px}.stats .card{flex:1;text-align:center;padding:10px;font-size:13px;color:var(--mut)}.stats b{font-size:20px;display:block;color:var(--tx)}
+.wk{display:flex;align-items:flex-end;gap:6px;height:84px}.wk div{flex:1;text-align:center;font-size:11px;color:var(--mut)}.wk i{display:block;background:var(--ac);border-radius:4px 4px 0 0;margin-bottom:2px;min-height:2px}
+input,select{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);min-width:0}
+.add{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.add input[type=text]{flex:1 1 140px}.add input[type=number]{width:80px}
+.planner{margin-top:14px}.planner .add{margin-top:8px}.planner input[type=text]{flex:1 1 220px}.hint{font-size:12px;color:var(--mut);margin-top:6px}
+.empty{color:var(--mut);font-size:14px}.sp{display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+details summary{cursor:pointer;color:var(--mut);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.set{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;margin-top:10px;font-size:14px}
+dialog{border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--tx);max-width:380px;width:92%}
+dialog input{width:100%;margin:8px 0}
+</style></head><body><main>
+<div class="top"><h1>Focus Tracker</h1><button class="sm" id="th">Theme</button></div>
+<div class="card"><div class="lb" id="gl"></div><div class="bar"><i id="gb" style="width:0"></i></div></div>
+<h2>Now</h2>
+<div class="card now" id="now"></div>
+<div class="sp"><button class="sm" id="m1">Stopwatch</button><button class="sm" id="m2">Pomodoro</button></div>
+<h2>Today’s plan (max 3)</h2>
+<div class="card" id="today"></div>
+<div style="margin-top:8px"><button class="sm" id="sug">Suggest today’s 3</button></div>
+<h2>AI schedule planner</h2>
+<div class="card planner"><div class="lb">Describe what you want to work on and when.</div><div class="add"><input type="text" id="aiq" placeholder="e.g. Add reading tomorrow at 3pm"><button class="p" id="aib">Add to schedule</button></div><div class="hint">Examples: “Plan coding Friday at 10am”, “Math every weekday at 4pm”. Runs privately in this browser; no account or API key needed.</div><div id="ai-msg" class="hint" aria-live="polite"></div><div id="sched" style="margin-top:8px"></div></div>
+<h2>Today</h2>
+<div class="stats"><div class="card"><b id="sT">0m</b>focused</div><div class="card"><b id="sN">0</b>sessions</div><div class="card"><b id="sP">0</b>blocks 🌳</div><div class="card"><b id="sS">0</b>day streak</div></div>
+<h2>Today’s sessions</h2>
+<div class="card"><div id="hist"></div>
+<div class="add"><select id="ms" aria-label="Task"></select><input type="number" id="mm" value="30" min="1" aria-label="Minutes"><button id="mb">Add missed time</button></div></div>
+<h2>Last 7 days</h2>
+<div class="card"><div class="wk" id="wk"></div><div id="cat" style="margin-top:12px"></div></div>
+<h2>All tasks</h2>
+<div class="card"><div id="lib"></div>
+<div class="add"><input type="text" id="an" placeholder="New task name"><select id="ac"><option>Personal</option><option>Study</option><option>Work</option><option>Other</option></select><input type="number" id="ap" value="45" min="5" step="5" aria-label="Planned minutes"><button class="p" id="ab">Add</button></div></div>
+<h2>&nbsp;</h2>
+<div class="card"><details><summary>Settings and data</summary>
+<div class="set"><label>Focus block (min)</label><input type="number" id="sf" min="1"><label>Short break (min)</label><input type="number" id="sb" min="1"><label>Long break (min)</label><input type="number" id="sl" min="1"><label>Daily goal (min)</label><input type="number" id="sg" min="10"><label>Sound and notifications</label><input type="checkbox" id="ss"></div>
+<div class="sp" style="justify-content:flex-start"><button class="sm" id="ex">Export CSV</button><button class="sm" id="bk">Backup JSON</button><button class="sm" id="im">Restore backup</button><input type="file" id="fi" accept=".json" hidden></div>
+<p class="lb">Keys: Space start/stop, P pause, D distracted, + add 5 min, B skip break. Four blocks, then a long break.</p></details></div>
+</main>
+<dialog id="rf"><div class="nm">How did that go?</div><div class="sp" id="rs"></div><input id="rn" type="text" placeholder="What did you cover? (optional)"><div class="sp"><button class="p" id="rsv">Save</button><button id="rsk">Skip</button></div></dialog>
+<script>
+const K='focus-tracker-v1',seed=[['Focus session','Personal',25]];
+let S;try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!S||!S.tasks)S={tasks:seed.map((t,i)=>({id:'t'+i,name:t[0],cat:t[1],plan:t[2]})),today:{d:'',ids:[]},sessions:[],schedule:[],active:null};
+S.schedule=Array.isArray(S.schedule)?S.schedule:[];
+// Remove the old bundled personal starter list from browsers that already saved it.
+const oldSeedNames=new Set(['English 2','Math 2','Stats 2','Python Programming','Git and GitHub','C Programming','DSA','C++','Networking basics: IP, DNS, ports','Linux commands and config files','Hackathon project']);
+const oldSeedIds=new Set(S.tasks.filter(t=>oldSeedNames.has(t.name)).map(t=>t.id));
+if(oldSeedIds.size){let starter=S.tasks.find(t=>t.name==='Focus session');if(!starter){starter={id:'t'+Date.now(),name:'Focus session',cat:'Personal',plan:25};S.tasks.push(starter)}S.sessions.forEach(x=>{if(oldSeedIds.has(x.task))x.task=starter.id});S.tasks=S.tasks.filter(t=>!oldSeedIds.has(t.id));S.today.ids=S.today.ids.filter(id=>!oldSeedIds.has(id));S.schedule=S.schedule.filter(x=>!oldSeedIds.has(x.task));}
+S.set=Object.assign({mode:'sw',focus:25,brk:5,long:15,goal:120,sound:true},S.set);S.brk=S.brk||null;S.pc=S.pc||{d:'',n:0};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()},tk=()=>dk(Date.now());
+if(S.today.d!==tk())S.today={d:tk(),ids:[]};if(S.pc.d!==tk())S.pc={d:tk(),n:0};
+const p2=n=>String(n).padStart(2,'0'),fm=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600);return (h?h+':':'')+p2(Math.floor(s%3600/60))+':'+p2(s%60)};
+const el=(a,n)=>n-a.start-(a.pt||0)-(a.pa?n-a.pa:0),fl=a=>((a.len||S.set.focus)+(a.extra||0))*6e4;
+const mn=s=>{const m=Math.round(s/60);return m>=60?Math.floor(m/60)+'h '+m%60+'m':m+'m'},get=id=>S.tasks.find(t=>t.id===id);
+const sess=(id,day)=>S.sessions.filter(s=>(!id||s.task===id)&&(!day||dk(s.start)===day));
+function secs(id,day){let t=sess(id,day).reduce((a,s)=>a+(s.end-s.start)/1e3,0);const a=S.active;if(a&&(!id||a.task===id)&&(!day||dk(a.start)===day))t+=el(a,Date.now())/1e3;return t}
+function ping(t,b){if(!S.set.sound)return;try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.setValueAtTime(.2,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+1);o.start();o.stop(c.currentTime+1)}catch(e){}
+ try{if(Notification.permission==='granted')new Notification(t,{body:b})}catch(e){}}
+function start(id){if(S.active)stop(false);S.brk=null;S.active={task:id,start:Date.now(),intr:0,pomo:S.set.mode==='pomo',len:S.set.focus};S.last=id;
+ try{if(S.set.sound&&Notification.permission==='default')Notification.requestPermission()}catch(e){}save();render()}
+function rec(dur){const a=S.active;S.active=null;if(dur<1e4)return null;const s={id:Date.now(),task:a.task,start:a.start,end:a.start+dur,intr:a.intr,note:'',rate:0};S.sessions.push(s);return s}
+function stop(rf){if(!S.active)return;const s=rec(el(S.active,Date.now()));save();render();if(s&&rf!==false)openRf(s.id)}
+function complete(){const a=S.active,s=rec(fl(a));S.pc.n++;const lg=S.pc.n%4===0,m=lg?S.set.long:S.set.brk;S.brk={end:Date.now()+m*6e4,lg};
+ ping('Block done','Take a '+m+' minute break');save();render();if(s)openRf(s.id)}
+let rr=0,rid=0;
+function openRf(id){rid=id;rr=0;$('rn').value='';drawR();$('rf').showModal()}
+function drawR(){$('rs').innerHTML=[1,2,3,4,5].map(n=>`<button class="sm ${n<=rr?'on':''}" onclick="rr=${n};drawR()">${n<=rr?'★':'☆'}</button>`).join('')}
+$('rsv').onclick=()=>{const s=S.sessions.find(x=>x.id===rid);if(s){s.note=$('rn').value.trim();s.rate=rr}save();$('rf').close();render()};
+$('rsk').onclick=()=>$('rf').close();
+function pause(){const a=S.active;if(!a)return;if(a.pa){a.pt=(a.pt||0)+Date.now()-a.pa;a.pa=null}else a.pa=Date.now();save();render()}
+function extend(m){if(S.active){S.active.extra=(S.active.extra||0)+m;save();render()}}
+function distract(){if(S.active){S.active.intr++;save();render()}}
+function setF(x){S.set.focus=Math.min(240,Math.max(1,x));$('sf').value=S.set.focus;save();render()}
+function adj(d){setF(S.set.focus+d)}
+function togglePlan(id){const i=S.today.ids.indexOf(id);if(i>=0)S.today.ids.splice(i,1);else if(S.today.ids.length<3)S.today.ids.push(id);else alert('Three is the limit. Remove one first.');save();render()}
+$('sug').onclick=()=>{const w=Date.now()-7*864e5,ids=[];['IITM','Coding','Systems'].forEach(c=>{const l=S.tasks.filter(t=>t.cat===c).map(t=>({t,s:S.sessions.filter(x=>x.task===t.id&&x.start>w).reduce((a,x)=>a+x.end-x.start,0)})).sort((a,b)=>a.s-b.s);if(l[0])ids.push(l[0].t.id)});S.today.ids=ids;save();render()};
+$('ab').onclick=()=>{const n=$('an').value.trim();if(!n)return;S.tasks.push({id:'t'+Date.now(),name:n,cat:$('ac').value,plan:+$('ap').value||30});$('an').value='';save();render()};
+function parsePlan(raw){const text=raw.trim(),low=text.toLowerCase();if(!text)return 'Tell me what to work on and when, e.g. “Read tomorrow at 3pm”.';
+ const weekday={sunday:0,monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6};let days=[];
+ if(/\bevery weekday\b/.test(low))days=[1,2,3,4,5];else if(/\bevery day\b|\bdaily\b/.test(low))days=[0,1,2,3,4,5,6];else for(const [name,num] of Object.entries(weekday))if(new RegExp('\\b'+name+'s?\\b').test(low)){days=[num];break}
+ const tm=low.match(/\b(?:at\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/)||low.match(/\bat\s+(\d{1,2}):(\d{2})\b/);if(!tm)return 'Add a time, like “at 3pm” or “at 15:30”.';let hh=+tm[1],mm=+(tm[2]||0);if(tm[3]){if(hh<1||hh>12||mm>59)return 'That time does not look valid.';hh=hh%12+(tm[3]==='pm'?12:0)}if(hh>23||mm>59)return 'That time does not look valid.';const time=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+ let name=text.replace(/\b(every weekday|every day|daily|tomorrow|today|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?\b/ig,' ').replace(/\b(at\s*)?\d{1,2}(:\d{2})?\s*(am|pm)?\b/ig,' ').replace(/\b(add|schedule|plan|put|to|my|the|please|every)\b/ig,' ').replace(/\s+/g,' ').trim()||'Focus session';let task=S.tasks.find(t=>t.name.toLowerCase()===name.toLowerCase());if(!task){task={id:'t'+Date.now(),name,cat:'Personal',plan:25};S.tasks.push(task)}
+ const base=new Date();base.setHours(0,0,0,0);let dates=[];if(days.length){for(let i=1;i<=14&&dates.length<5;i++){const d=new Date(base);d.setDate(base.getDate()+i);if(days.includes(d.getDay()))dates.push(d)}}else{const d=new Date(base);const dayWord=low.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/);if(dayWord){let jump=(weekday[dayWord[1]]-d.getDay()+7)%7;if(!jump)jump=7;d.setDate(d.getDate()+jump)}else if(/\btomorrow\b|\bnext week\b/.test(low))d.setDate(d.getDate()+1);dates=[d]}
+ dates.forEach(d=>{const day=dk(d);if(!S.schedule.some(x=>x.task===task.id&&x.day===day&&x.time===time))S.schedule.push({id:'p'+Date.now()+Math.random().toString(16).slice(2),task:task.id,day,time,minutes:task.plan})});save();render();return `Added ${task.name} for ${dates.map(d=>d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})).join(', ')} at ${time}.`}
+function delPlan(id){S.schedule=S.schedule.filter(x=>x.id!==id);save();render()}
+$('aib').onclick=()=>{const msg=parsePlan($('aiq').value);$('aiq').value='';render();$('ai-msg').textContent=msg};$('aiq').addEventListener('keydown',e=>{if(e.key==='Enter')$('aib').click()});
+$('mb').onclick=()=>{const m=+$('mm').value;if(!m||m<1)return;const e=Date.now();S.sessions.push({id:e,task:$('ms').value,start:e-m*6e4,end:e,intr:0,note:'Added manually',rate:0});save();render()};
+function delT(id){if(!confirm('Delete this task? Past sessions stay in your history.'))return;S.tasks=S.tasks.filter(t=>t.id!==id);S.today.ids=S.today.ids.filter(x=>x!==id);if(S.active&&S.active.task===id)S.active=null;save();render()}
+function delS(id){if(!confirm('Delete this session?'))return;S.sessions=S.sessions.filter(s=>s.id!==id);save();render()}
+function row(t,pl){const sd=secs(t.id,tk()),pc=Math.min(100,sd/(t.plan*60)*100),run=S.active&&S.active.task===t.id;
+ return `<div class="row"><div class="i"><div class="n">${esc(t.name)}</div><div class="m"><span class="tag">${esc(t.cat)}</span>${mn(sd)} of ${t.plan}m today</div>${pl?`<div class="bar"><i style="width:${pc}%"></i></div>`:''}</div>${pl?`<button class="sm ${run?'s':'p'}" onclick="${run?'stop()':`start('${t.id}')`}">${run?'Stop':'Start'}</button><button class="sm" onclick="togglePlan('${t.id}')">Remove</button>`:`<button class="sm" onclick="togglePlan('${t.id}')">${S.today.ids.includes(t.id)?'Planned':'Add to today'}</button><button class="sm" onclick="delT('${t.id}')" aria-label="Delete task">×</button>`}</div>`}
+function render(){
+ const a=S.active,t=a&&get(a.task),nm=a?(t?esc(t.name):'Deleted task'):'';
+ $('m1').className='sm'+(S.set.mode==='sw'?' on':'');$('m2').className='sm'+(S.set.mode==='pomo'?' on':'');
+ $('now').innerHTML=S.brk?`<div class="lb">${S.brk.lg?'Long break':'Short break'}: stand up, drink water, no phone</div><div class="tm" id="clk"></div><button onclick="S.brk=null;save();render()">Skip break</button>`
+ :a?`<div class="lb">${a.pa?'Paused':a.pomo?'Focus block':'Stopwatch'}</div><div class="nm">${nm}</div><div class="tm" id="clk"></div><div class="sp"><button class="s" onclick="stop()">Stop</button><button onclick="pause()">${a.pa?'Resume':'Pause'}</button>${a.pomo?'<button onclick="extend(5)">+5 min</button>':''}<button onclick="distract()">Got distracted (${a.intr})</button></div>`
+ :`<div class="nm">Nothing running</div>${S.set.mode==='pomo'?`<div class="tm" style="color:var(--mut)">${fm(S.set.focus*60)}</div><div class="sp"><button class="sm" onclick="adj(-5)">−5</button>${[15,25,45,50,90].map(x=>`<button class="sm ${S.set.focus===x?'on':''}" onclick="setF(${x})">${x}</button>`).join('')}<button class="sm" onclick="adj(5)">+5</button></div>`:'<div class="tm" style="color:var(--mut)">00:00</div>'}<div class="lb" style="margin-top:8px">Press Space to start your last task.</div>`;
+ const td=S.today.ids.map(get).filter(Boolean);
+ $('today').innerHTML=td.length?td.map(x=>row(x,1)).join(''):'<div class="empty">No plan yet. Tap “Suggest today’s 3” or add tasks below.</div>';
+ $('lib').innerHTML=S.tasks.map(x=>row(x,0)).join('');
+ const plans=S.schedule.slice().sort((a,b)=>(a.day+a.time).localeCompare(b.day+b.time));$('sched').innerHTML=plans.length?plans.map(p=>{const t=get(p.task);return `<div class=\"row\"><div class=\"i\"><div class=\"n\">${esc(t?t.name:'Focus session')}</div><div class=\"m\">${new Date(p.day+'T00:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})} · ${esc(p.time)} · ${p.minutes||25} min</div></div><button class=\"sm\" onclick=\"${t?`start('${t.id}')`:''}\">Start</button><button class=\"sm\" onclick=\"delPlan('${p.id}')\" aria-label=\"Remove scheduled session\">×</button></div>`}).join(''):'<div class=\"empty\">Your upcoming sessions will appear here.</div>';
+ $('ms').innerHTML=S.tasks.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+ const tt=secs(null,tk()),g=S.set.goal*60;$('sT').textContent=mn(tt);$('sN').textContent=sess(null,tk()).length;$('sP').textContent=S.pc.n;
+ $('gl').textContent=`Daily goal: ${mn(tt)} of ${mn(g)}${tt>=g?' ✓ done':''}`;$('gb').style.width=Math.min(100,tt/g*100)+'%';
+ let st=0,d=Date.now();const has=x=>S.sessions.some(s=>dk(s.start)===x)||(a&&dk(a.start)===x);if(!has(dk(d)))d-=864e5;while(has(dk(d))){st++;d-=864e5}$('sS').textContent=st;
+ const h=sess(null,tk()).sort((x,y)=>y.start-x.start);
+ $('hist').innerHTML=h.length?h.map(s=>{const k=get(s.task);return `<div class="row"><div class="i"><div class="n">${k?esc(k.name):'Deleted task'}</div><div class="m">${new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}, ${mn((s.end-s.start)/1e3)}${s.rate?' · '+'★'.repeat(s.rate):''}${s.intr?' · '+s.intr+' distractions':''}${s.note?' · '+esc(s.note):''}</div></div><button class="sm" onclick="delS(${s.id})" aria-label="Delete session">×</button></div>`}).join(''):'<div class="empty">Nothing logged yet today.</div>';
+ const days=[];for(let i=6;i>=0;i--){const x=new Date(Date.now()-i*864e5);days.push([dk(x),['Su','Mo','Tu','We','Th','Fr','Sa'][x.getDay()]])}
+ const v=days.map(([k])=>secs(null,k)),mx=Math.max(...v,3600);
+ $('wk').innerHTML=days.map((x,i)=>`<div><i style="height:${v[i]/mx*60}px"></i>${x[1]}<br>${v[i]?mn(v[i]):'-'}</div>`).join('');
+ const ks=new Set(days.map(x=>x[0])),cs={};S.sessions.filter(s=>ks.has(dk(s.start))).forEach(s=>{const k=get(s.task),c=k?k.cat:'Other';cs[c]=(cs[c]||0)+(s.end-s.start)/1e3});
+ const tot=Object.values(cs).reduce((x,y)=>x+y,0);
+ $('cat').innerHTML=tot?Object.entries(cs).sort((x,y)=>y[1]-x[1]).map(([c,s])=>`<div class="m">${esc(c)}: ${mn(s)}</div><div class="bar"><i style="width:${s/tot*100}%"></i></div>`).join(''):'<div class="empty">Your subject split appears here.</div>';
+ upd()}
+function upd(){const a=S.active,n=Date.now(),c=$('clk');let txt='';
+ if(S.brk){txt=fm((S.brk.end-n)/1e3);document.title='Break '+txt}
+ else if(a){txt=a.pomo?fm((fl(a)-el(a,n))/1e3):fm(el(a,n)/1e3);document.title=(a.pa?'Paused ':'')+txt+' Focus Tracker'}
+ else document.title='Focus Tracker';if(c)c.textContent=txt}
+setInterval(()=>{const n=Date.now(),a=S.active;
+ if(a&&a.pomo&&!a.pa&&el(a,n)>=fl(a)){complete();return}
+ if(S.brk&&n>=S.brk.end){S.brk=null;ping('Break over','Start your next block');save();render();return}upd()},1000);
+$('m1').onclick=()=>{S.set.mode='sw';save();render()};$('m2').onclick=()=>{S.set.mode='pomo';save();render()};
+$('th').onclick=()=>{const d=document.documentElement,x=d.dataset.theme==='dark'||(!d.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches)?'light':'dark';d.dataset.theme=x;S.theme=x;save()};
+if(S.theme)document.documentElement.dataset.theme=S.theme;
+[['sf','focus'],['sb','brk'],['sl','long'],['sg','goal']].forEach(([i,k])=>{$(i).value=S.set[k];$(i).onchange=()=>{S.set[k]=Math.max(1,+$(i).value||S.set[k]);save();render()}});
+$('ss').checked=S.set.sound;$('ss').onchange=()=>{S.set.sound=$('ss').checked;save()};
+function dl(n,t,m){const u=URL.createObjectURL(new Blob([t],{type:m})),a=document.createElement('a');a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),500)}
+$('ex').onclick=()=>{const q=x=>'"'+String(x).replace(/"/g,'""')+'"';dl('focus-sessions.csv',['date,start,end,minutes,task,category,rating,distractions,note'].concat(S.sessions.map(s=>{const k=get(s.task)||{name:'Deleted',cat:''};return [dk(s.start),new Date(s.start).toLocaleTimeString(),new Date(s.end).toLocaleTimeString(),Math.round((s.end-s.start)/6e4),q(k.name),q(k.cat),s.rate,s.intr,q(s.note)].join(',')})).join('\n'),'text/csv')};
+$('bk').onclick=()=>dl('focus-backup-'+tk()+'.json',JSON.stringify(S),'application/json');
+$('im').onclick=()=>$('fi').click();
+$('fi').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.tasks||!d.sessions)throw 0;if(!confirm('Replace current data with this backup?'))return;S=d;S.set=Object.assign({mode:'sw',focus:25,brk:5,long:15,goal:120,sound:true},S.set);save();location.reload()}catch(x){alert('That file is not a valid backup.')}};r.readAsText(f)};
+document.addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)||$('rf').open||e.metaKey||e.ctrlKey||e.altKey)return;
+ if(e.code==='Space'){e.preventDefault();if(document.activeElement)document.activeElement.blur();if(S.active)stop();else if(S.brk){S.brk=null;save();render()}else if(S.last&&get(S.last))start(S.last);else if(S.today.ids[0])start(S.today.ids[0])}
+ else if(e.key==='p'&&S.active)pause();else if(e.key==='d'&&S.active)distract();else if(e.key==='+'&&S.active&&S.active.pomo)extend(5);else if(e.key==='b'&&S.brk){S.brk=null;save();render()}});
+document.addEventListener('keyup',e=>{if(e.code==='Space'&&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))e.preventDefault()});
+render();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
