@@ -13,3 +13,5 @@ Three ways to run it. Pick ONE and move on.
 ## Privacy and planning
 
 A fresh install starts with one generic **Focus session** task. Tasks, focus sessions, settings, and planned sessions are saved in the current browser’s local storage; they are not uploaded to GitHub or sent to an AI service. The schedule planner parses common day and time phrases locally and can add one-off sessions or up to five upcoming weekday/daily sessions.
+
+#Link is live on this url: https://explabarnav.github.io/Focus-tracker/
