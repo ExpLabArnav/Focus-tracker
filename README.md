@@ -5,6 +5,7 @@
 
 ## For Desktop app (Electron): install Node.js, then in this folder run:
    npm install
+   
    npm start
 
 
